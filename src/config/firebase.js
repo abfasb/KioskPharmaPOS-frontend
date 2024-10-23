@@ -5,13 +5,13 @@ import { getFirestore } from "firebase/firestore";
 console.log(import.meta.env.VITE_APP_FIREBASE_API_KEY);
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_APP_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_APP_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_APP_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_APP_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_APP_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_APP_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_APP_FIREBASE_MEASUREMENT_ID
+  apiKey: "AIzaSyAV0OjXxPXCGE_u-PoIuIK8m07u-gZHKKU",
+  authDomain: "kioskpharmapos.firebaseapp.com",
+  projectId: "kioskpharmapos",
+  storageBucket: "kioskpharmapos.appspot.com",
+  messagingSenderId: "567845065039",
+  appId: "1:567845065039:web:73ba53e580d809e3cfb53a",
+  measurementId: "G-FZJY2D9196"
 };
 
 
@@ -21,5 +21,8 @@ const analytics = getAnalytics(app);
 const db = getFirestore(app);
 
 export { app, analytics, db };
+
+
+
 
 
