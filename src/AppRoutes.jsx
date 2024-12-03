@@ -13,6 +13,7 @@ import Product from './pages/kiosk/Product';
 import OrderSummaryPage from './pages/kiosk/OrderSummaryPage';
 import PaymentSuccess from './pages/kiosk/PaymentSuccess';
 import PrescriptionHistoryPage from './pages/PrescriptionHistoryPage';
+import SchemaDisplay from './components/SchemaDisplay';
 
 function AppRoutes() {
 
@@ -31,6 +32,7 @@ function AppRoutes() {
        </Route>
 
       <Route path='/user/kiosk' Component={MainKiosk}/>
+      <Route path='/get-collection' Component={SchemaDisplay}/>
       <Route path='/user/kiosk/cart/:userId' Component={Cart}/>
       <Route path='/user/kiosk/View-Product/:productId' Component={Product}/>
       <Route path='/user/kiosk/payment-success' Component={PaymentSuccess}/>
