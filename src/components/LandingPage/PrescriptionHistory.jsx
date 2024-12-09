@@ -49,8 +49,9 @@ function PrescriptionHistory() {
     };
 
     const filteredTransactions = transactions.filter(
-        (transaction) => transaction.checkoutStatus === activeTab
+        (transaction) => transaction.checkoutStatus.toLowerCase() === activeTab.toLowerCase()
     );
+    
 
     if (loading) return <p>Loading...</p>;
 
