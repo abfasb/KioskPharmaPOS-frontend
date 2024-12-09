@@ -83,36 +83,12 @@ function OrderSummary() {
       toast.success("Order successfully cancelled!", {
         position: "top-right",
         autoClose: 3000,
-        hideProgressBar: true,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
+        hideProgressBar: false,
       });
   
       const orderDoc = await getDoc(orderRef);
       const { userId } = orderDoc.data();
 
-      try {
-        const adminFCMTokens = await getAdminFCMTokens();
-  
-        if (adminFCMTokens && adminFCMTokens.length > 0) {
-          await fetch("http://localhost:5000/user/send-notification/order", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              title: "New Order",
-              message: `A ${orderId} has been cancelled."`,
-              orderId: orderId,
-              userId: userId,
-              fcmTokens: adminFCMTokens,
-            }),
-          });
-        } else {
-          console.log("No FCM token found for the admin");
-        }
-      } catch (error) {
-        console.error("Error sending notification:", error);
-      }
   
     } catch (error) {
       console.error("Error cancelling the order:", error);
@@ -121,24 +97,6 @@ function OrderSummary() {
   };
   
  
-  const getUserFCMToken = async (userId) => {
-    try {
-      const userRef = doc(db, "users", userId);
-      const userDoc = await getDoc(userRef);
-
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        const fcmToken = userData.fcmTokens || null;
-        return fcmToken;
-      } else {
-        console.log(`User document with ID ${userId} does not exist`);
-        return null;
-      }
-    } catch (error) {
-      console.error('Error retrieving FCM token:', error);
-      return null;
-    }
-  };
 
   const handleDownloadInvoice = () => {
     const doc = new jsPDF();
@@ -217,78 +175,49 @@ function OrderSummary() {
 
     doc.save(`Checacio_Invoice_${orderId}.pdf`);
 };
+useEffect(() => {
+  if (!orderId) return;
 
-  useEffect(() => {
-    const fetchCheckOutStatus = async () => {
-      try {
-        const orderRef = doc(db, "transactions", orderId);
-        const orderDoc = await getDoc(orderRef);
+  const orderRef = doc(db, "transactions", orderId);
 
-        if (orderDoc.exists()) {
-          setCheckoutStatus(orderDoc.data().checkoutStatus || "Processing");
-        } else {
-          console.error("Order document does not exist.");
-        }
-      } catch (error) {
-        console.error("Error fetching checkout status:", error);
+  // Fetch initial checkout status and set up real-time updates
+  const fetchAndSubscribe = async () => {
+    try {
+      // Fetch initial status
+      const orderDoc = await getDoc(orderRef);
+      if (orderDoc.exists()) {
+        setCheckoutStatus(orderDoc.data().checkoutStatus || "Processing");
+      } else {
+        console.error("Order document does not exist for initial fetch.");
       }
-    };
+    } catch (error) {
+      console.error("Error fetching initial checkout status:", error);
+    }
 
-    const subscribeToCheckOutStatus = () => {
-      const orderRef = doc(db, "transactions", orderId);
-      return onSnapshot(orderRef, (doc) => {
-        if (doc.exists()) {
-          const data = doc.data();
-          setCheckOutStatus(data.checkOutStatus || "Processing");
-        } else {
-          console.error("Order document does not exist for real-time updates.");
-        }
-      });
-    };
-
-    const handleEWalletNotifications = async () => {
-      if (
-        transactionData.isNewOrder &&
-        transactionData.paymentMethod === "E-wallet" &&
-        !notificationSentRef.current
-      ) {
-        try {
-          const recipientToken = await getUserFCMToken(user.uid);
-          await setDoc(doc(collection(db, 'transactions'), orderId), transactionData);
-          console.log('Transaction saved successfully:', orderId);
-
-          if (recipientToken) {
-            await fetch("http://localhost:5000/user/send-notification", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                title: "Transaction Confirmed",
-                body: "Your order has been successfully confirmed.",
-                recipientToken,
-              }),
-            });
-          } else {
-            console.log("No valid recipient token found");
-          }
-
-          await sendAdminNotification();
-          setNotificationSent(true); 
-          notificationSentRef.current = true;
-        } catch (error) {
-          console.error("Error handling E-wallet notifications:", error);
-        }
+    // Set up real-time updates
+    const unsubscribe = onSnapshot(orderRef, (docSnapshot) => {
+      if (docSnapshot.exists()) {
+        setCheckoutStatus(docSnapshot.data().checkoutStatus || "Processing");
+      } else {
+        console.error("Order document does not exist for real-time updates.");
       }
-    };
+    });
 
-    fetchCheckOutStatus();
+    return unsubscribe;
+  };
 
-    const unsubscribe = subscribeToCheckOutStatus();
+  let unsubscribe;
+  fetchAndSubscribe().then((unsub) => {
+    unsubscribe = unsub;
+  });
 
-    handleEWalletNotifications();
-    return () => {
+  return () => {
+    if (unsubscribe) {
       unsubscribe();
     }
-  }, [transactionData, orderId, user.uid, notificationSent]);
+  };
+}, [transactionData, orderId, user.uid]);
+
 
     let displayDate = format(new Date(), 'MMMM do yyyy');
     let pesoSign = '₱';
@@ -296,7 +225,6 @@ function OrderSummary() {
 
     return (
       <section className="py-24 relative">
-        <ToastContainer position="top-right" />
         <button
           onClick={() => window.location.href = "../../user/kiosk"}
           className="absolute flex items-center top-4 left-4 text-green-600 font-semibold border-b-2 hover:bg-border-600 transition-all duration-300"
@@ -427,6 +355,7 @@ function OrderSummary() {
             </div>
           </div>
         )}
+        <ToastContainer position="top-right" />
       </section>
     );
     

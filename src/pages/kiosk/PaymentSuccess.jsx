@@ -9,18 +9,47 @@ const PaymentSuccess= () => {
   const location = useLocation();
   const orderId = new URLSearchParams(location.search).get("orderId");  
   
-  const sendAdminNotification = async () => {
+
+  const getAdminFCMTokens = async () => {
     try {
-      const adminFCMToken = await getAdminFCMTokens();
+      const adminRef = doc(db, "admin", "checachio@gmail.com");
+      const adminDoc = await getDoc(adminRef);
   
-      if (adminFCMToken) {
-        await fetch("http://localhost:5000/admin/send-notification", {
+      if (adminDoc.exists()) {
+        const data = adminDoc.data();
+        const fcmTokens = data.fcmTokens || [];
+        
+        if (fcmTokens.length > 0) {
+          return fcmTokens;
+        } else {
+          console.warn("No FCM tokens found for the admin.");
+          return null;
+        }
+      } else {
+        console.error("Admin document does not exist.");
+        return null;
+      }
+    } catch (error) {
+      console.error("Error retrieving admin FCM token:", error);
+      return null;
+    }
+  };
+
+  const sendAdminNotification = async (userId) => {
+    try {
+      const orderId = `order-${Date.now()}`;
+      const adminFCMTokens = await getAdminFCMTokens();
+      
+      if (adminFCMTokens && adminFCMTokens.length > 0) {
+        await fetch("http://localhost:5000/user/send-notification/order", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             title: "New Order",
-            body: "A new order has been placed.",
-            recipientToken: adminFCMToken,
+            message: "A new order has been placed.",
+            orderId: orderId,
+            userId: userId,
+            fcmTokens: adminFCMTokens,
           }),
         });
       } else {
@@ -31,26 +60,6 @@ const PaymentSuccess= () => {
     }
   };
 
-  
-const getUserFCMToken = async (userId) => {
-  try {
-    const userRef = doc(db, "users", userId);
-
-    const userDoc = await getDoc(userRef);
-
-    if (userDoc.exists()) {
-      const userData = userDoc.data();
-      const fcmToken = userData.fcmTokens || null;
-      return fcmToken;
-    } else {
-      console.log(`User document with ID ${userId} does not exist`);
-      return null;
-    }
-  } catch (error) {
-    console.error('Error retrieving FCM token:', error);
-    return null;
-  }
-};
 
 const clearUserCart = async (userId) => {
   try {
@@ -106,9 +115,6 @@ const handlePurchaseAndUpdateStock = async (userId) => {
         const currentStockLevel = productData.stockLevel;
 
         const newStockLevel = currentStockLevel - item.quantity;
-        console.log(`Current stock for ${item.name}: ${currentStockLevel}`);
-        console.log(`Attempting to reduce stock by: ${item.quantity}`);
-        console.log(`New stock level will be: ${newStockLevel}`);
 
         if (newStockLevel >= 0) {
           batch.update(productRef, { stockLevel: newStockLevel });
@@ -155,7 +161,7 @@ const handlePurchaseAndUpdateStock = async (userId) => {
         await handlePurchaseAndUpdateStock(transactionData.userId);
         
         await clearUserCart(transactionData.userId);
-
+        await sendAdminNotification(transactionData.userId);
         await updateDoc(orderRef, { checkoutStatus: "processing" });
         navigate("/user/kiosk/order-summary", { state: { orderId, transactionData: { ...transactionData, isNewOrder: true }} });
       } catch (error) {

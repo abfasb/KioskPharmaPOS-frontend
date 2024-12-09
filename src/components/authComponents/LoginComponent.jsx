@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Img from '../../assets/img/bg-auth.png'
+import Img from '../../assets/img/logo4.png'
 
 function LoginComponent({ signInWithGoogle, signInWithUsernameAndPassword, loginError }) {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);

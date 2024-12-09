@@ -387,6 +387,8 @@ const decreaseQuantity = async (productId) => {
   }
 };
 
+const [isModalOpen, setIsModalOpen] = useState(false);
+const [selectedProductId, setSelectedProductId] = useState(null);
 
 const removeToCart = async (productId) => {
   try {
@@ -414,6 +416,23 @@ const removeToCart = async (productId) => {
       console.error('Error:', error);
   }
 };
+
+    const openModal = (productId) => {
+      setSelectedProductId(productId);
+      setIsModalOpen(true);
+    };
+
+    const closeModal = () => {
+      setSelectedProductId(null);
+      setIsModalOpen(false);
+    };
+
+    const confirmRemove = () => {
+      if (selectedProductId) {
+        removeToCart(selectedProductId);
+      }
+      closeModal();
+    };
 
 
   const originalPrice = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -497,7 +516,7 @@ const removeToCart = async (productId) => {
                             Add to Favorites
                         </button>
 
-                        <button onClick={() => removeToCart(item.productId)} type="button" className="inline-flex items-center text-sm font-medium text-red-600 hover:underline dark:text-red-500">
+                        <button onClick={() => openModal(item.productId)} type="button" className="inline-flex items-center text-sm font-medium text-red-600 hover:underline dark:text-red-500">
                             <svg className="me-1.5 h-5 w-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
                                 <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18 17.94 6M18 18 6.06 6" />
                             </svg>
@@ -706,6 +725,29 @@ const removeToCart = async (productId) => {
            <p>{checkoutStatus}</p>
          </div>
           )}
+
+{isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded shadow-md">
+            <h2 className="text-lg font-bold mb-4">Confirm Removal</h2>
+            <p>Are you sure you want to remove this item from your cart?</p>
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={closeModal}
+                className="bg-gray-300 text-black px-4 py-2 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmRemove}
+                className="bg-red-500 text-white px-4 py-2 rounded"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 </section>
   )
 }

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { db, auth } from '../config/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import bcrypt from 'bcryptjs'
-import Img from '../assets/img/bg-auth.png'
+import Img from '../assets/img/logo4.png'
 import { useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 

@@ -14,6 +14,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'; // Import Toastify styles
 import PrescriptionVerification from '../../components/admin/PrescriptionVerification';
 import OrderKiosk from '../../components/admin/OrderKiosk';
+import Contact from '../../components/admin/Contact';
 
 function AdminSide() {
   const navigate = useNavigate();
@@ -100,6 +101,8 @@ function AdminSide() {
         return <PrescriptionVerification />;
       case 'Kiosk':
         return <OrderKiosk />;
+        case 'Contact':
+        return <Contact />;
       default:
         return <AddProduct />;
     }

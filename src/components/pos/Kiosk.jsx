@@ -38,13 +38,16 @@ const Kiosk = () => {
   const [showModal, setShowModal] = useState(false);
   const [verifiedProducts, setVerifiedProducts] = useState([]);
   const [uploadStatus, setUploadStatus] = useState(null);
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem('user')));
+
+
 
   useEffect(() => {
     const auth = getAuth();
     auth.onAuthStateChanged((user) => {
       setAuthenticatedUser(user);
     });
-  }, []);
+  }, [user.uid]);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -93,6 +96,7 @@ const Kiosk = () => {
         fuse.search(medication).map((result) => result.item)
       );
   
+      
       if (matchedProducts.length) {
         alert("Prescription verified! Displaying matching products.");
         setVerifiedProducts(matchedProducts);
@@ -105,6 +109,7 @@ const Kiosk = () => {
       console.error("Error:", error);
     }
   };
+
 
   const handlePrescriptionSubmit = async () => {
     if (!prescriptionFile) {
@@ -226,6 +231,9 @@ const Kiosk = () => {
           <div className="flex items-center space-x-4">
             <button onClick={viewCart} className="relative">
               <AiOutlineShoppingCart className="text-3xl text-green-700" />
+              <span className="absolute -top-2 -right-2 bg-green-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                2
+              </span>
             </button>
             {selectedCategory === "Prescription Medication" && (
               <div className="flex items-center space-x-2">
